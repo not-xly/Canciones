@@ -11,15 +11,10 @@
 
 * { box-sizing: border-box; }
 
-/* La página no se desplaza: solo la lista. Así la cabecera y la barra inferior no se mueven al tirar de la pantalla en Safari */
-html, body { margin: 0; height: 100%; overflow: hidden; }
+/* La página no se desplaza: solo la lista. La altura la fija app.js con la altura visible real (--app-h) */
+html, body { margin: 0; height: var(--app-h, 100dvh); overflow: hidden; }
 
 body {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
