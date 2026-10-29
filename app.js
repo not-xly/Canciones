@@ -1,9 +1,10 @@
-// Canciones: lista de canciones ordenada por banda. Los datos se guardan en este dispositivo.
+// Canciones: lista de canciones. Se ven en orden alfabético (A-Z) o en el orden que tú dejas arrastrando el asa.
+// Los datos se guardan en este dispositivo.
 const STORAGE_KEY = "canciones-v1";
 const BACKUP_KEY = "canciones-v1-copia";
+const MODE_KEY = "canciones-v1-modo";
 const DELETE_WIDTH = 84;
 const collator = new Intl.Collator("es", { sensitivity: "base", numeric: true });
-const PENCIL_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 
 const list = document.getElementById("list");
 const count = document.getElementById("count");
@@ -13,11 +14,14 @@ const fichaForm = document.getElementById("fichaForm");
 const fichaTitle = document.getElementById("fichaTitle");
 const fDelete = document.getElementById("fDelete");
 const fCancel = document.getElementById("fCancel");
+const ordenBtn = document.getElementById("ordenBtn");
 
 let songs = load();
+let modo = localStorage.getItem(MODE_KEY) === "manual" ? "manual" : "alfabetico";
 let editingId = null;
 let swipedId = null;
 let toastTimer = null;
+let drag = null;
 
 // Datos
 
@@ -45,8 +49,18 @@ function newId() {
 }
 
 // Orden alfabético por banda (sin distinguir tildes ni mayúsculas); empates por canción.
-function ordenadas() {
-  return songs.slice().sort((a, b) => collator.compare(a.banda, b.banda) || collator.compare(a.cancion, b.cancion));
+function comparar(a, b) {
+  return collator.compare(a.banda, b.banda) || collator.compare(a.cancion, b.cancion);
+}
+
+// "alfabetico" muestra A-Z; "manual" muestra el orden que has dejado arrastrando.
+function lista() {
+  return modo === "alfabetico" ? songs.slice().sort(comparar) : songs;
+}
+
+function setModo(nuevo) {
+  modo = nuevo;
+  localStorage.setItem(MODE_KEY, nuevo);
 }
 
 // Pantalla
@@ -54,16 +68,17 @@ function ordenadas() {
 function render() {
   swipedId = null;
   list.textContent = "";
-  const lista = ordenadas();
-  count.textContent = lista.length === 1 ? "1 canción" : `${lista.length} canciones`;
-  if (!lista.length) {
+  const visibles = lista();
+  count.textContent = visibles.length === 1 ? "1 canción" : `${visibles.length} canciones`;
+  ordenBtn.classList.toggle("activo", modo === "alfabetico");
+  if (!visibles.length) {
     const vacio = document.createElement("li");
     vacio.className = "empty";
     vacio.textContent = "Todavía no hay canciones. Toca + para añadir la primera.";
     list.appendChild(vacio);
     return;
   }
-  for (const r of lista) list.appendChild(buildRow(r));
+  for (const r of visibles) list.appendChild(buildRow(r));
 }
 
 function copiable(campo, valor) {
@@ -97,17 +112,18 @@ function buildRow(r) {
   const content = document.createElement("div");
   content.className = "row-content";
 
+  // Línea 1: banda a la izquierda y nota pequeña a la derecha. Línea 2: canción.
   const texto = document.createElement("div");
   texto.className = "row-text";
-  const notas = document.createElement("div");
+  const linea1 = document.createElement("div");
+  linea1.className = "linea1";
+  const notas = document.createElement("span");
   notas.className = "notas";
   notas.textContent = r.notas;
-  texto.append(copiable("banda", r.banda), copiable("cancion", r.cancion), notas);
+  linea1.append(copiable("banda", r.banda), notas);
+  texto.append(linea1, copiable("cancion", r.cancion));
 
-  const lapiz = document.createElement("span");
-  lapiz.className = "edit-icon";
-  lapiz.innerHTML = PENCIL_SVG;
-  content.append(texto, lapiz);
+  content.append(texto, buildHandle(row));
   row.append(del, content);
 
   // Deslizar a la izquierda para borrar
@@ -150,6 +166,7 @@ function buildRow(r) {
   // Toque: copia la banda o la canción; en cualquier otro punto abre la ficha para editar.
   content.addEventListener("click", (e) => {
     if (moved) return;
+    if (e.target.closest(".handle")) return;
     // Con una fila deslizada, tocar la cierra en lugar de hacer otra cosa.
     if (swipedId) {
       setSwiped(null);
@@ -175,6 +192,79 @@ function setSwiped(id) {
     if (fila) fila.classList.add("swiped");
   }
 }
+
+// Arrastrar para reordenar a mano
+
+function buildHandle(fila) {
+  const asa = document.createElement("span");
+  asa.className = "handle";
+  asa.setAttribute("role", "button");
+  asa.setAttribute("aria-label", "Mover canción");
+  asa.innerHTML = "<i></i><i></i><i></i>";
+  asa.addEventListener("pointerdown", (e) => empezarArrastre(e, fila, asa));
+  return asa;
+}
+
+function empezarArrastre(e, fila, asa) {
+  // Que el deslizamiento de la fila no se entere de este toque.
+  e.stopPropagation();
+  e.preventDefault();
+  if (swipedId) setSwiped(null);
+  asa.setPointerCapture(e.pointerId);
+  drag = { fila, pointerId: e.pointerId, y: e.clientY, antes: lista().map((x) => x.id), timer: null };
+  fila.classList.add("dragging");
+}
+
+function moverArrastre(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  drag.y = e.clientY;
+  reubicar();
+  autoDesplazar();
+}
+
+// Coloca la fila arrastrada según la posición del dedo.
+function reubicar() {
+  const otras = [...list.querySelectorAll(".row:not(.dragging)")];
+  const siguiente = otras.find((f) => {
+    const r = f.getBoundingClientRect();
+    return drag.y < r.top + r.height / 2;
+  });
+  if (siguiente) list.insertBefore(drag.fila, siguiente);
+  else list.appendChild(drag.fila);
+}
+
+// Si el dedo está cerca del borde de la lista, la lista se desplaza sola.
+function autoDesplazar() {
+  clearInterval(drag.timer);
+  drag.timer = null;
+  const area = list.getBoundingClientRect();
+  const zona = 60;
+  const paso = drag.y < area.top + zona ? -8 : drag.y > area.bottom - zona ? 8 : 0;
+  if (!paso) return;
+  drag.timer = setInterval(() => {
+    list.scrollTop += paso;
+    reubicar();
+  }, 16);
+}
+
+function soltarArrastre(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  clearInterval(drag.timer);
+  drag.fila.classList.remove("dragging");
+  const despues = [...list.querySelectorAll(".row")].map((f) => f.dataset.id);
+  const cambio = despues.some((id, i) => id !== drag.antes[i]);
+  drag = null;
+  if (cambio) {
+    songs = despues.map((id) => songs.find((x) => x.id === id)).filter(Boolean);
+    setModo("manual");
+    save();
+  }
+  render();
+}
+
+list.addEventListener("pointermove", moverArrastre);
+list.addEventListener("pointerup", soltarArrastre);
+list.addEventListener("pointercancel", soltarArrastre);
 
 async function copiar(texto) {
   try {
@@ -225,8 +315,15 @@ fichaForm.addEventListener("submit", (e) => {
     return;
   }
   const existente = songs.find((x) => x.id === editingId);
-  if (existente) Object.assign(existente, datos);
-  else songs.push({ id: newId(), ...datos });
+  if (existente) {
+    Object.assign(existente, datos);
+  } else {
+    // Una canción nueva entra antes de la primera que vaya después alfabéticamente.
+    const nueva = { id: newId(), ...datos };
+    const pos = songs.findIndex((x) => comparar(nueva, x) < 0);
+    if (pos < 0) songs.push(nueva);
+    else songs.splice(pos, 0, nueva);
+  }
   save();
   ficha.close();
   render();
@@ -245,6 +342,12 @@ fDelete.addEventListener("click", () => {
 });
 
 document.getElementById("addBtn").addEventListener("click", () => openFicha());
+
+ordenBtn.addEventListener("click", () => {
+  setModo("alfabetico");
+  render();
+  mostrarAviso("Orden alfabético");
+});
 
 // Copia de seguridad
 

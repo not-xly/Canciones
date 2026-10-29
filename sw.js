@@ -1,5 +1,5 @@
 // Cambia la versión del caché cuando modifiques los archivos de la app.
-const CACHE = "canciones-v1";
+const CACHE = "canciones-v2";
 const ASSETS = [
   "./", "index.html", "styles.css", "app.js", "manifest.json",
   "icon-180.png", "icon-192.png", "icon-512.png",
