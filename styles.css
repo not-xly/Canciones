@@ -146,26 +146,25 @@ button, input, textarea { font: inherit; }
 }
 .notas:empty { display: none; }
 
-/* Asa de arrastre: zona grande a la derecha, de la altura de la fila, para pulsarla con el dedo */
+/* Asa de arrastre: tres líneas finas (como en Zampar) dentro de una zona de 48 px para el dedo */
 .handle {
   flex: 0 0 auto;
-  align-self: stretch;
-  width: 64px;
-  margin-right: -4px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin-right: -8px;
   cursor: grab;
   touch-action: none;
 }
-.handle i {
-  display: block;
-  width: 26px;
-  height: 3px;
-  border-radius: 2px;
-  background: #b3aac9;
+.handle::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  right: 15px;
+  top: 18px;
+  height: 2px;
+  background: #b5aca2;
+  box-shadow: 0 5px 0 #b5aca2, 0 10px 0 #b5aca2;
 }
 
 /* Fila que se está arrastrando */

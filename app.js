@@ -200,7 +200,6 @@ function buildHandle(fila) {
   asa.className = "handle";
   asa.setAttribute("role", "button");
   asa.setAttribute("aria-label", "Mover canción");
-  asa.innerHTML = "<i></i><i></i><i></i>";
   asa.addEventListener("pointerdown", (e) => empezarArrastre(e, fila, asa));
   return asa;
 }
