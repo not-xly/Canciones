@@ -96,7 +96,7 @@ button, input, textarea { font: inherit; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 4px 8px 16px;
+  padding: 8px 0 8px 16px;
   background: #fff;
   touch-action: pan-y;
   -webkit-user-select: none;
@@ -146,25 +146,26 @@ button, input, textarea { font: inherit; }
 }
 .notas:empty { display: none; }
 
-/* Asa de arrastre: tres rayitas a la derecha */
+/* Asa de arrastre: zona grande a la derecha, de la altura de la fila, para pulsarla con el dedo */
 .handle {
   flex: 0 0 auto;
-  width: 34px;
-  height: 40px;
+  align-self: stretch;
+  width: 64px;
+  margin-right: -4px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   cursor: grab;
   touch-action: none;
 }
 .handle i {
   display: block;
-  width: 18px;
-  height: 2px;
+  width: 26px;
+  height: 3px;
   border-radius: 2px;
-  background: #c9c2d9;
+  background: #b3aac9;
 }
 
 /* Fila que se está arrastrando */
