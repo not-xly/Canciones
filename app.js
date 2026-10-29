@@ -1,13 +1,19 @@
 // Canciones: lista de canciones. Se ven en orden alfabético (A-Z) o en el orden que tú dejas arrastrando el asa.
 // Los datos se guardan en este dispositivo.
-// Altura visible real: Safari cambia su barra inferior al tirar de la pantalla y las unidades CSS no siempre la siguen.
+// Altura de la app. Instalada en la pantalla de inicio (navigator.standalone): toda la pantalla.
+// En Safari: la altura visible, que cambia cuando Safari muestra u oculta su barra.
 function ajustarAltura() {
-  document.documentElement.style.setProperty("--app-h", `${window.innerHeight}px`);
+  const alto = navigator.standalone ? screen.height : window.innerHeight;
+  document.documentElement.style.setProperty("--app-h", `${alto}px`);
 }
 ajustarAltura();
+window.addEventListener("load", ajustarAltura);
+window.addEventListener("pageshow", ajustarAltura);
 window.addEventListener("resize", ajustarAltura);
 window.addEventListener("orientationchange", ajustarAltura);
+document.addEventListener("visibilitychange", ajustarAltura);
 if (window.visualViewport) window.visualViewport.addEventListener("resize", ajustarAltura);
+setTimeout(ajustarAltura, 500);
 
 const STORAGE_KEY = "canciones-v1";
 const BACKUP_KEY = "canciones-v1-copia";
