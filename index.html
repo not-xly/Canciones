@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Canciones">
+  <meta name="theme-color" content="#5b3fd1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Canciones</title>
+</head>
+<body>
+  <header class="top">
+    <div class="title-wrap">
+      <h1>Canciones</h1>
+      <span id="count" class="count"></span>
+    </div>
+    <button id="addBtn" class="add-btn" aria-label="Añadir canción">+</button>
+  </header>
+
+  <ul id="list" class="list"></ul>
+
+  <footer class="bottombar">
+    <button id="exportBtn">Exportar</button>
+    <label class="btn">Importar
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </label>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="ficha">
+    <form id="fichaForm">
+      <h2 id="fichaTitle">Nueva canción</h2>
+
+      <label>Banda o grupo
+        <input name="banda" required autocomplete="off" autocapitalize="words">
+      </label>
+
+      <label>Canción
+        <input name="cancion" required autocomplete="off" autocapitalize="sentences">
+      </label>
+
+      <label>Notas
+        <textarea name="notas" rows="3" placeholder="Fuente, tipo de música…"></textarea>
+      </label>
+
+      <div class="dialog-actions">
+        <button type="button" id="fDelete" class="danger">Borrar</button>
+        <span class="spacer"></span>
+        <button type="button" id="fCancel">Cancelar</button>
+        <button type="submit" class="primary">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
